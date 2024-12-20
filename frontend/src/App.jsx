@@ -7,7 +7,7 @@ const App = () => {
 
   // Fetch tasks from backend
   useEffect(() => {
-    axios.get('http://localhost:5000/api/tasks')
+    axios.get('https://simple-project-api.vercel.app/api/tasks')
       .then((response) => {
         setTasks(response.data || []);
       })
@@ -20,7 +20,7 @@ const App = () => {
   const addTask = () => {
     const newTask = { title: task };
 
-    axios.post('http://localhost:5000/api/tasks', newTask)
+    axios.post('https://simple-project-api.vercel.app/api/tasks', newTask)
       .then((response) => {
         setTasks([...tasks, response.data]);
         setTask('');
@@ -32,7 +32,7 @@ const App = () => {
 
   // Delete task
   const deleteTask = (id) => {
-    axios.delete(`http://localhost:5000/api/tasks/${id}`)
+    axios.delete(`https://simple-project-api.vercel.app/api/tasks/${id}`)
       .then(() => {
         setTasks(tasks.filter((t) => t._id !== id));
       })
