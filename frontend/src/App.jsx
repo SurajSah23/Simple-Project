@@ -1,71 +1,55 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState } from 'react';
+import { Heart } from 'lucide-react';
+import { AddAnimalForm } from './AddAnimalForm';
+import { AnimalCard } from './AnimalCard';
 
-const App = () => {
-  const [tasks, setTasks] = useState([]);
-  const [task, setTask] = useState('');
+function App() {
+  const [animals, setAnimals] = useState([]);
 
-  // Fetch tasks from backend
-  useEffect(() => {
-    axios.get('https://simple-project-api.vercel.app/api/tasks')
-      .then((response) => {
-        setTasks(response.data || []);
-      })
-      .catch((error) => {
-        console.error('Error fetching tasks:', error);
-      });
-  }, []);
+  // Function to add an animal to the list
+  function handleAddAnimal(name, emoji) {
+    const newAnimal = {
+      id: Math.random().toString(36).substring(2, 9), // Generate a unique ID
+      name,
+      emoji,
+    };
+    setAnimals([newAnimal, ...animals]);
+  }
 
-  // Add new task
-  const addTask = () => {
-    const newTask = { title: task };
-
-    axios.post('https://simple-project-api.vercel.app/api/tasks', newTask)
-      .then((response) => {
-        setTasks([...tasks, response.data]);
-        setTask('');
-      })
-      .catch((error) => {
-        console.error('Error adding task:', error);
-      });
-  };
-
-  // Delete task
-  const deleteTask = (id) => {
-    axios.delete(`https://simple-project-api.vercel.app/api/tasks/${id}`)
-      .then(() => {
-        setTasks(tasks.filter((t) => t._id !== id));
-      })
-      .catch((error) => {
-        console.error('Error deleting task:', error);
-      });
-  };
+  // Function to delete an animal by ID
+  function handleDeleteAnimal(id) {
+    setAnimals(animals.filter(animal => animal.id !== id));
+  }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto' }}>
-      <h1>To-Do List</h1>
-      
-      <div>
-        <input
-          type="text"
-          placeholder="Add a new task"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-          style={{ padding: '10px', width: '80%' }}
-        />
-        <button onClick={addTask} style={{ padding: '10px', marginLeft: '10px' }}>Add Task</button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-pink-100 p-4">
+      <div className="max-w-2xl mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-purple-600 flex items-center justify-center gap-2">
+            <Heart className="text-pink-500" />
+            My Favorite Animals
+          </h1>
+        </header>
+
+        <div className="grid gap-6">
+          {/* Form to add animal */}
+          <AddAnimalForm onAdd={handleAddAnimal} />
+
+          {/* Displaying animals */}
+          <div className="space-y-4">
+            {animals.map((animal) => (
+              <AnimalCard
+                key={animal.id}
+                name={animal.name}
+                emoji={animal.emoji}
+                onDelete={() => handleDeleteAnimal(animal.id)}
+              />
+            ))}
+          </div>
+        </div>
       </div>
-      
-      <ul>
-        {tasks.map((t) => (
-          <li key={t._id} style={{ margin: '10px 0', display: 'flex', justifyContent: 'space-between' }}>
-            <span>{t.title}</span>
-            <button onClick={() => deleteTask(t._id)} style={{ backgroundColor: 'red', color: 'white' }}>Delete</button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
-};
+}
 
 export default App;
