@@ -1,92 +1,71 @@
-import { useEffect, useState } from 'react';
-import { TaskForm } from './components/TaskForm';
-import { TaskItem } from './components/TaskItem';
-import { getTasks, createTask, updateTask, deleteTask } from './api/tasks';
-import { ClipboardList } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-function App() {
+const App = () => {
   const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [task, setTask] = useState('');
 
+  // Fetch tasks from backend
   useEffect(() => {
-    fetchTasks();
+    axios.get('http://localhost:5000/api/tasks')
+      .then((response) => {
+        setTasks(response.data || []);
+      })
+      .catch((error) => {
+        console.error('Error fetching tasks:', error);
+      });
   }, []);
 
-  const fetchTasks = async () => {
-    try {
-      const data = await getTasks();
-      setTasks(data);
-    } catch {
-      setError('Failed to fetch tasks');
-    } finally {
-      setLoading(false);
-    }
+  // Add new task
+  const addTask = () => {
+    const newTask = { title: task };
+
+    axios.post('http://localhost:5000/api/tasks', newTask)
+      .then((response) => {
+        setTasks([...tasks, response.data]);
+        setTask('');
+      })
+      .catch((error) => {
+        console.error('Error adding task:', error);
+      });
   };
 
-  const handleCreateTask = async (title, description) => {
-    try {
-      const newTask = await createTask({ title, description, status: 'pending' });
-      setTasks([newTask, ...tasks]);
-    } catch {
-      setError('Failed to create task');
-    }
-  };
-
-  const handleStatusChange = async (id, status) => {
-    try {
-      const updatedTask = await updateTask(id, { status });
-      setTasks(tasks.map(task => task._id === id ? updatedTask : task));
-    } catch {
-      setError('Failed to update task');
-    }
-  };
-
-  const handleDeleteTask = async (id) => {
-    try {
-      await deleteTask(id);
-      setTasks(tasks.filter(task => task._id !== id));
-    } catch {
-      setError('Failed to delete task');
-    }
+  // Delete task
+  const deleteTask = (id) => {
+    axios.delete(`http://localhost:5000/api/tasks/${id}`)
+      .then(() => {
+        setTasks(tasks.filter((t) => t._id !== id));
+      })
+      .catch((error) => {
+        console.error('Error deleting task:', error);
+      });
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <ClipboardList className="w-12 h-12 text-indigo-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900">Task Manager</h1>
-          <p className="mt-2 text-gray-600">Manage your tasks efficiently</p>
-        </div>
-
-        <TaskForm onSubmit={handleCreateTask} />
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-8 space-y-4">
-          {loading ? (
-            <div className="text-center text-gray-600">Loading tasks...</div>
-          ) : tasks.length === 0 ? (
-            <div className="text-center text-gray-600">No tasks yet. Create one above!</div>
-          ) : (
-            tasks.map(task => (
-              <TaskItem
-                key={task._id}
-                task={task}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDeleteTask}
-              />
-            ))
-          )}
-        </div>
+    <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto' }}>
+      <h1>To-Do List</h1>
+      
+      <div>
+        <input
+          type="text"
+          placeholder="Add a new task"
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          style={{ padding: '10px', width: '80%' }}
+        />
+        <button onClick={addTask} style={{ padding: '10px', marginLeft: '10px' }}>Add Task</button>
       </div>
+      
+      <ul>
+        {tasks.map((t) => (
+          <li key={t._id} style={{ margin: '10px 0', display: 'flex', justifyContent: 'space-between' }}>
+            <span>{t.title}</span>
+            <button onClick={() => deleteTask(t._id)} style={{ backgroundColor: 'red', color: 'white' }}>Delete</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
-}
+};
 
 export default App;
